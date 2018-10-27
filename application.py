@@ -5,7 +5,7 @@ from ui.main import Main
 
 if __name__ == "__main__":
     root = Tk()
-    root.geometry("640x480")
+    root.geometry("800x600")
     root.title("Tkinter GUI")
     center_window(root)
     ui = Main(root)
