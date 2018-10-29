@@ -1,6 +1,8 @@
-from tkinter import LEFT, BOTH, PhotoImage, SUNKEN
+from tkinter import LEFT, BOTH, PhotoImage, SUNKEN, Toplevel
 from tkinter.ttk import Frame, Button
 
+from screen_utils import center_window
+from ui.login import Login
 from ui.theme import AppStyle
 
 
@@ -35,7 +37,8 @@ class Main(Frame):
         open_button.grid(row=0, column=2, padx=[0, 10])
 
         self._config_image = PhotoImage(file="resources/config.gif")
-        config_button = Button(top_frame, image=self._config_image, compound=LEFT, text="Config")
+        config_button = Button(top_frame, image=self._config_image, compound=LEFT, text="Config",
+                               command=self.on_config_button_click)
         config_button.grid(row=0, column=3, padx=[0, 10])
 
         self._update_image = PhotoImage(file="resources/download.gif")
@@ -44,3 +47,14 @@ class Main(Frame):
 
         bottom_frame = Frame(self, padding=10, style="BOT.TFrame", relief=SUNKEN)
         bottom_frame.grid(row=1, column=0, padx=10, pady=[0, 10], sticky="nsew")
+
+    def on_config_button_click(self):
+        child = Toplevel(self)
+        child.title("Login")
+        child.geometry("300x125")
+        center_window(child)
+        child.transient(self)
+        child.resizable(False, False)
+        child.grab_set()
+        Login(child)
+        self.wait_window(child)
