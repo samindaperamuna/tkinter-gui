@@ -49,8 +49,8 @@ class Login(Frame):
                 self.master.destroy()
 
                 child = Toplevel(root)
-                child.title("Config")
-                child.geometry("640x480")
+                child.title("Configuration")
+                child.geometry("400x235")
                 center_window(child)
                 child.transient(root)
                 child.resizable(False, False)

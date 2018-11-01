@@ -1,19 +1,19 @@
 {
-  "main": {
-    "screen": "False",
-    "width_percent": "1",
-    "height_percent": "1",
-    "type_camera": "0"
-  },
   "frames": {
+    "frame_count": "0",
     "frame_interval": "1",
-    "frame_rate": "1",
-    "frame_count": "0"
+    "frame_rate": "1"
+  },
+  "main": {
+    "width_percent": "1",
+    "type_camera": "0",
+    "screen": "False",
+    "height_percent": "1"
   },
   "cameras": {
-    "0": "0",
+    "3": "http://admin:@192.168.10.1:80/media/?action=stream",
     "1": "1",
-    "2": "rtsp://888888:888888@192.168.100.33:554/cam/realmonitor?channel=1&subtype=0",
-    "3": "http://admin:@192.168.10.1:80/media/?action=stream"
+    "0": "0",
+    "2": "rtsp://888888:888888@192.168.100.33:554/cam/realmonitor?channel=1&subtype=0"
   }
 }
