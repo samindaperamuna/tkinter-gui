@@ -1,8 +1,8 @@
-from tkinter import W, LEFT, BOTH, E, messagebox, Toplevel
+from tkinter import W, LEFT, BOTH, E, messagebox
 from tkinter.ttk import Frame, Entry, Label, Button
 
 from screen_utils import center_window
-from ui.config import Config
+from ui.main import Main
 from ui.theme import AppStyle
 
 
@@ -46,16 +46,13 @@ class Login(Frame):
                 root = self.master.master
 
                 # Close the login dialog.
-                self.master.destroy()
+                self.destroy()
 
-                child = Toplevel(root)
-                child.title("Configuration")
-                child.geometry("400x235")
-                center_window(child)
-                child.transient(root)
-                child.resizable(False, False)
-                child.grab_set()
-                Config(child)
+                root = self.master
+                root.title("TKInter GUI Application")
+                root.geometry("800x600")
+                center_window(root)
+                Main(root)
             else:
                 messagebox.showerror(title="Couldn't Login", message="Invalid username or password.")
 

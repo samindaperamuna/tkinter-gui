@@ -2,7 +2,7 @@ from tkinter import LEFT, BOTH, PhotoImage, SUNKEN, Toplevel
 from tkinter.ttk import Frame, Button
 
 from screen_utils import center_window
-from ui.login import Login
+from ui.config import Config
 from ui.theme import AppStyle
 
 
@@ -50,11 +50,11 @@ class Main(Frame):
 
     def on_config_button_click(self):
         child = Toplevel(self)
-        child.title("Login")
-        child.geometry("300x125")
+        child.title("Config")
+        child.geometry("400x235")
         center_window(child)
         child.transient(self)
         child.resizable(False, False)
         child.grab_set()
-        Login(child)
+        Config(child)
         self.wait_window(child)
