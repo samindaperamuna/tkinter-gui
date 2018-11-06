@@ -1,7 +1,8 @@
-from tkinter import LEFT, BOTH, E, W, N, messagebox, END
-from tkinter.ttk import Frame, Notebook, Label, Entry, Button
+from tkinter import LEFT, BOTH, E, W, N, messagebox, END, Tk, StringVar, _setit
+from tkinter.ttk import Frame, Notebook, Label, Entry, Button, OptionMenu
 
 from data.json_util import read_settings, write_settings, reset_default
+from screen_utils import center_window
 from ui.theme import AppStyle
 
 
@@ -19,6 +20,7 @@ class Config(Frame):
         style = AppStyle()
         style.configure("SELF.TLabel", width=15)
         style.configure("SELF.TEntry", width=200, padding=5)
+        style.configure("SELF.TMenubutton", width=200, padding=5)
 
         # Tab container.
         notebook = Notebook(self)
@@ -70,25 +72,26 @@ class Config(Frame):
         cameras = Frame(notebook)
         cameras.columnconfigure(1, weight=1)
 
-        cam_0_label = Label(cameras, text="Camera 0", style="SELF.TLabel")
-        cam_0_label.grid(row=0, column=0, padx=[10, 0], pady=[10, 0], sticky=W)
-        self.cam_0_entry = Entry(cameras, style="SELF.TEntry")
-        self.cam_0_entry.grid(row=0, column=1, padx=[0, 10], pady=[10, 0], sticky=W + E)
+        camera_label = Label(cameras, text="Cameras", style="SELF.TLabel")
+        camera_label.grid(row=0, column=0, padx=[10, 0], pady=[10, 0], sticky=W)
 
-        cam_1_label = Label(cameras, text="Camera 1", style="SELF.TLabel")
-        cam_1_label.grid(row=1, column=0, padx=[10, 0], pady=[5, 0], sticky=W)
-        self.cam_1_entry = Entry(cameras, style="SELF.TEntry")
-        self.cam_1_entry.grid(row=1, column=1, padx=[0, 10], pady=[5, 0], sticky=W + E)
+        self.selected_camera_var = StringVar(self)
+        self.selected_camera_var.trace('w', self.on_camera_option_select)
 
-        cam_2_label = Label(cameras, text="Camera 2", style="SELF.TLabel")
-        cam_2_label.grid(row=2, column=0, padx=[10, 0], pady=[5, 0], sticky=W)
-        self.cam_2_entry = Entry(cameras, style="SELF.TEntry")
-        self.cam_2_entry.grid(row=2, column=1, padx=[0, 10], pady=[5, 0], sticky=W + E)
+        self.cameras_options = OptionMenu(cameras, self.selected_camera_var, style="SELF.TMenubutton")
+        self.cameras_options.grid(row=0, column=1, padx=[0, 10], pady=[10, 0], sticky=E)
 
-        cam_3_type_label = Label(cameras, text="Camera 3", style="SELF.TLabel")
-        cam_3_type_label.grid(row=3, column=0, padx=[10, 0], pady=[5, 10], sticky=W)
-        self.cam_3_entry = Entry(cameras, style="SELF.TEntry")
-        self.cam_3_entry.grid(row=3, column=1, padx=[0, 10], pady=[5, 10], sticky=W + E)
+        add_cam_button = Button(cameras, text="Add", width=5, command=self.on_add_cam_button_click)
+        add_cam_button.grid(row=0, column=2, padx=[0, 10], pady=[10, 0], sticky=E)
+
+        delete_cam_button = Button(cameras, text="Delete", width=5, command=self.on_delete_cam_button_click)
+        delete_cam_button.grid(row=0, column=3, padx=[0, 10], pady=[10, 0], sticky=E)
+
+        self.edit_cam_entry = Entry(cameras, style="SELF.TEntry")
+        self.edit_cam_entry.grid(row=1, column=0, columnspan=3, padx=10, pady=[5, 0], sticky=W + E)
+
+        edit_cam_button = Button(cameras, text="Edit", width=5, command=self.on_edit_cam_button_click)
+        edit_cam_button.grid(row=1, column=2, columnspan=2, padx=[0, 10], pady=[5, 0], sticky=E)
 
         # Add the tabs.
         notebook.add(main, text="Main")
@@ -111,6 +114,41 @@ class Config(Frame):
 
         # Load configuration.
         self.load_config()
+
+    def on_camera_option_select(self, *args):
+        if self.data is not None:
+            self.edit_cam_entry.delete(0, END)
+            self.edit_cam_entry.insert(0, self.data["cameras"][self.selected_camera_var.get()])
+
+    def on_add_cam_button_click(self):
+        # Get the no of cameras.
+        index = len(self.data["cameras"])
+        # Add the camera to the data dictionary.
+        self.data["cameras"][str(index)] = self.edit_cam_entry.get()
+
+        # Update camera select box.
+        self.clear_cameras()
+        self.add_cameras(index)
+
+    def on_delete_cam_button_click(self):
+        size = len(self.data["cameras"])
+        if size > 1:
+            index = size - 1
+            self.data["cameras"].pop(str(index))
+
+            # Update cameras
+            self.clear_cameras()
+            self.add_cameras(index - 1)
+        else:
+            messagebox.showinfo("Cannot Delete Camera", "There must be at least one camera on the list.")
+
+    def on_edit_cam_button_click(self):
+        index = self.selected_camera_var.get()
+        self.data["cameras"][str(index)] = self.edit_cam_entry.get()
+
+        # Update camera select box.
+        self.clear_cameras()
+        self.add_cameras(index)
 
     def on_accept_button_click(self, _):
         self.save_config()
@@ -135,10 +173,8 @@ class Config(Frame):
         self.frame_interval_entry.delete(0, END)
         self.frame_rate_entry.delete(0, END)
         self.frame_count_entry.delete(0, END)
-        self.cam_0_entry.delete(0, END)
-        self.cam_1_entry.delete(0, END)
-        self.cam_2_entry.delete(0, END)
-        self.cam_3_entry.delete(0, END)
+
+        self.clear_cameras()
 
     def load_config(self):
         data = read_settings()
@@ -153,15 +189,30 @@ class Config(Frame):
         self.frame_interval_entry.insert(0, data["frames"]["frame_interval"])
         self.frame_rate_entry.insert(0, data["frames"]["frame_rate"])
         self.frame_count_entry.insert(0, data["frames"]["frame_count"])
-
-        # Load cameras section
-        self.cam_0_entry.insert(0, data["cameras"]["0"])
-        self.cam_1_entry.insert(0, data["cameras"]["1"])
-        self.cam_2_entry.insert(0, data["cameras"]["2"])
-        self.cam_3_entry.insert(0, data["cameras"]["3"])
-
         # Set the class data field to the JSON dict.
+
         self.data = data
+
+        self.add_cameras(0)
+
+    def clear_cameras(self):
+        self.cameras_options['menu'].delete(0, 'end')
+
+    def add_cameras(self, selection: int):
+        cams = []
+        # Load cameras section
+        for cam in self.data["cameras"]:
+            cams.append(cam)
+
+        # Sort list
+        cams = sorted(cams)
+
+        # Append list to options.
+        for cam in cams:
+            self.cameras_options['menu'].add_command(label=cam, command=_setit(self.selected_camera_var, cam))
+
+        # Set selected item to the 0
+        self.selected_camera_var.set(selection)
 
     def save_config(self):
         data = self.data
@@ -177,14 +228,18 @@ class Config(Frame):
         data["frames"]["frame_rate"] = self.frame_rate_entry.get()
         data["frames"]["frame_count"] = self.frame_count_entry.get()
 
-        # Set cameras section.
-        data["cameras"]["0"] = self.cam_0_entry.get()
-        data["cameras"]["1"] = self.cam_1_entry.get()
-        data["cameras"]["2"] = self.cam_2_entry.get()
-        data["cameras"]["3"] = self.cam_3_entry.get()
-
         # Save JSON data into file.
         if not write_settings(data):
             messagebox.showerror(title="An Error Occurred!", message="Couldn't save the changes.")
         else:
             self.master.destroy()
+
+
+if __name__ == "__main__":
+    root = Tk()
+    root.title("Config Test Screen")
+    root.geometry("400x235")
+    center_window(root)
+
+    config = Config(parent=root)
+    root.mainloop()
