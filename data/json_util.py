@@ -2,8 +2,8 @@ import json
 import logging
 from shutil import copyfile
 
-RESOURCE_FILE = "../resources/parameters.json"
-DEFAULT_FILE = "../resources/default.json"
+RESOURCE_FILE = "resources/parameters.json"
+DEFAULT_FILE = "resources/default.json"
 
 
 def read_settings():

@@ -1,12 +1,22 @@
-from tkinter import LEFT, BOTH, PhotoImage, SUNKEN, Toplevel
+from tkinter import LEFT, BOTH, PhotoImage, SUNKEN, Toplevel, Canvas, N, W
+from tkinter import LEFT, BOTH, PhotoImage, SUNKEN, Toplevel, Canvas, N, W
 from tkinter.ttk import Frame, Button
 
+from PIL.Image import fromarray
+from PIL.ImageTk import PhotoImage
+
+from data.json_util import read_settings
 from screen_utils import center_window
 from ui.config import Config
+from ui.file_utils import open_file
 from ui.theme import AppStyle
+from video_utils import VideoCapture
 
 
 class Main(Frame):
+    capture = None
+    photo = None
+    delay = 15
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -29,11 +39,13 @@ class Main(Frame):
         top_frame.columnconfigure(5, weight=1)
 
         self._biometry_image = PhotoImage(file="resources/biometrical.gif")
-        biometry_button = Button(top_frame, image=self._biometry_image, compound=LEFT, text="Recognize")
+        biometry_button = Button(top_frame, image=self._biometry_image, compound=LEFT, text="Recognize",
+                                 command=self.on_recognize_button_click)
         biometry_button.grid(row=0, column=1, padx=[0, 10])
 
         self._open_image = PhotoImage(file="resources/folder_open.gif")
-        open_button = Button(top_frame, image=self._open_image, compound=LEFT, text="Open")
+        open_button = Button(top_frame, image=self._open_image, compound=LEFT, text="Open",
+                             command=self.on_open_button_click)
         open_button.grid(row=0, column=2, padx=[0, 10])
 
         self._config_image = PhotoImage(file="resources/config.gif")
@@ -47,6 +59,35 @@ class Main(Frame):
 
         bottom_frame = Frame(self, padding=10, style="BOT.TFrame", relief=SUNKEN)
         bottom_frame.grid(row=1, column=0, padx=10, pady=[0, 10], sticky="nsew")
+
+        self.canvas = Canvas(bottom_frame)
+        self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
+
+        self.init_video()
+
+    def init_video(self):
+        source = read_settings()["main"]["type_camera"]
+
+        if source.isnumeric():
+            self.capture = VideoCapture(video_source=int(source))
+            self.canvas.configure(width=self.capture.width, height=self.capture.height)
+            self.update()
+
+    def update(self):
+        # Get a frame from the video source.
+        ret, frame = self.capture.get_frame()
+
+        if ret:
+            self.photo = PhotoImage(image=fromarray(frame))
+            self.canvas.create_image(0, 0, image=self.photo, anchor=N + W)
+
+        self.master.after(self.delay, self.update)
+
+    def on_recognize_button_click(self):
+        self.capture.take_snapshot()
+
+    def on_open_button_click(self):
+        open_file(".")
 
     def on_config_button_click(self):
         child = Toplevel(self)
