@@ -52,6 +52,7 @@ class Login(Frame):
                 root.title("TKInter GUI Application")
                 root.geometry("800x600")
                 root.minsize(800, 600)
+                root.resizable(True, True)
                 center_window(root)
                 Main(root)
             else:

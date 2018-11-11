@@ -2,6 +2,7 @@ import logging
 from tkinter import CENTER, messagebox, StringVar
 from tkinter import LEFT, BOTH, PhotoImage, SUNKEN, Toplevel, Canvas
 from tkinter.ttk import Frame, Button, OptionMenu
+from urllib.request import URLopener
 
 from PIL.Image import fromarray
 from PIL.ImageTk import PhotoImage
@@ -15,6 +16,8 @@ from video_utils import VideoCapture
 
 
 class Main(Frame):
+    REMOTE_UPDATE_URL = "http://www.aiquimist.com/update/parameters.json"
+
     data = None
     shouldUpdate = False
     snapshot_dir = "snapshots"
@@ -43,6 +46,9 @@ class Main(Frame):
         # Bottom frame styles.
         style.configure("BOT.TFrame")
 
+        # Button styles.
+        style.configure("TOP.TMenubutton", padding=13)
+
         top_frame = Frame(self, padding=10, style="TOP.TFrame")
         top_frame.grid(row=0, column=0, sticky="ew")
 
@@ -51,9 +57,10 @@ class Main(Frame):
 
         cams_list = self.get_cams_list()
         self.selected_camera_var = StringVar()
+        self.selected_camera_var.trace('w', self.on_camera_option_select)
 
-        self.cameras_option = OptionMenu(top_frame, self.selected_camera_var, cams_list[0], *cams_list,
-                                         command=self.on_camera_option_select)
+        self.cameras_option = OptionMenu(top_frame, self.selected_camera_var, None, *cams_list,
+                                         command=self.on_camera_option_select, style="TOP.TMenubutton")
         self.cameras_option.grid(row=0, column=1, padx=[0, 10])
 
         self._biometry_image = PhotoImage(file="resources/biometrical.gif")
@@ -72,7 +79,8 @@ class Main(Frame):
         config_button.grid(row=0, column=4, padx=[0, 10])
 
         self._update_image = PhotoImage(file="resources/download.gif")
-        update_button = Button(top_frame, image=self._update_image, compound=LEFT, text="Update")
+        update_button = Button(top_frame, image=self._update_image, compound=LEFT, text="Update",
+                               command=self.on_update_button_click)
         update_button.grid(row=0, column=5, padx=[0, 10])
 
         bottom_frame = Frame(self, padding=10, style="BOT.TFrame", relief=SUNKEN)
@@ -80,6 +88,9 @@ class Main(Frame):
 
         self.canvas = Canvas(bottom_frame, bg="black")
         self.canvas.pack(fill=BOTH, expand=True)
+
+        # Set the default camera.
+        self.selected_camera_var.set(cams_list[0])
 
     def get_cams_list(self):
         cams = []
@@ -133,11 +144,13 @@ class Main(Frame):
             can_height = self.canvas.winfo_height()
 
             # Get a frame from the video source.
-            ret, frame = self.capture.get_frame(can_width, can_height)
-
-            if ret:
-                self.photo = PhotoImage(image=fromarray(frame))
-                self.canvas.create_image(can_width / 2, can_height / 2, image=self.photo)
+            try:
+                ret, frame = self.capture.get_frame(can_width, can_height)
+                if ret:
+                    self.photo = PhotoImage(image=fromarray(frame))
+                    self.canvas.create_image(can_width / 2, can_height / 2, image=self.photo)
+            except Exception as e:
+                self.shouldUpdate = False
 
     def on_recognize_button_click(self):
         ret = self.capture.take_snapshot()
@@ -159,3 +172,18 @@ class Main(Frame):
         child.grab_set()
         Config(child)
         self.wait_window(child)
+
+        # Read the new settings.
+        self.data = read_settings()
+
+    def on_update_button_click(self):
+        try:
+            opener = URLopener()
+            opener.retrieve(self.REMOTE_UPDATE_URL, "resources/parameters.json")
+
+            # Read the new settings.
+            self.data = read_settings()
+            messagebox.showinfo("Settings Update", "Settings successfully updated from the server.")
+        except Exception as e:
+            logging.critical("Couldn't open the remote settings file: {0}".format(str(e)))
+            messagebox.showerror("Couldn't Update Settings", "Couldn't open the remote settings file.")
