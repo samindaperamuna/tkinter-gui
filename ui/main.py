@@ -53,7 +53,7 @@ class Main(Frame):
         top_frame.grid(row=0, column=0, sticky="ew")
 
         top_frame.columnconfigure(0, weight=1)
-        top_frame.columnconfigure(6, weight=1)
+        top_frame.columnconfigure(7, weight=1)
 
         cams_list = self.get_cams_list()
         self.selected_camera_var = StringVar()
@@ -82,6 +82,11 @@ class Main(Frame):
         update_button = Button(top_frame, image=self._update_image, compound=LEFT, text="Update",
                                command=self.on_update_button_click)
         update_button.grid(row=0, column=5, padx=[0, 10])
+
+        self._close_image = PhotoImage(file="resources/close.gif")
+        close_button = Button(top_frame, image=self._close_image, compound=LEFT, text="Close",
+                              command=self.on_window_close)
+        close_button.grid(row=0, column=6, padx=[0, 10])
 
         bottom_frame = Frame(self, padding=10, style="BOT.TFrame", relief=SUNKEN)
         bottom_frame.grid(row=1, column=0, padx=10, pady=[0, 10], sticky="nsew")
